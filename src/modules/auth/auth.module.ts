@@ -9,9 +9,9 @@ import { LocalStrategy } from 'src/auth/strategies/local.strategy';
 import { JwtStrategy } from 'src/auth/strategies/jwt.strategy';
 import { User } from 'src/core';
 
-
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }), // 👈 makes .env variables available everywhere
     SequelizeModule.forFeature([User]),
     PassportModule,
     JwtModule.registerAsync({

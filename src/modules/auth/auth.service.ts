@@ -73,29 +73,29 @@ export class AuthService {
   }
 
   async createDefaultAdmin() {
-    const adminExists = await this.userModel.findOne({
-      where: { role: 'admin' },
+  const adminExists = await this.userModel.findOne({
+    where: { role: 'admin' },
+  });
+
+  if (!adminExists) {
+    await this.userModel.create({
+      username: process.env.DEFAULT_ADMIN_USERNAME,
+      email: process.env.DEFAULT_ADMIN_EMAIL,
+      password: process.env.DEFAULT_ADMIN_PASSWORD,
+      firstName: process.env.DEFAULT_ADMIN_FIRSTNAME,
+      lastName: process.env.DEFAULT_ADMIN_LASTNAME,
+      role: 'admin',
     });
 
-    if (!adminExists) {
-      await this.userModel.create({
-        username: 'admin',
-        email: 'admin@company.com',
-        password: 'Admin123!',
-        firstName: 'System',
-        lastName: 'Administrator',
-        role: 'admin',
-      });
-      
-      // Also create AOlayemi user from screenshot
-      await this.userModel.create({
-        username: 'AOlayemi',
-        email: 'aolayemi@company.com',
-        password: 'Password1',
-        firstName: 'A',
-        lastName: 'Olayemi',
-        role: 'admin',
-      });
-    }
+    await this.userModel.create({
+      username: process.env.AOLAYEMI_USERNAME,
+      email: process.env.AOLAYEMI_EMAIL,
+      password: process.env.AOLAYEMI_PASSWORD,
+      firstName: process.env.AOLAYEMI_FIRSTNAME,
+      lastName: process.env.AOLAYEMI_LASTNAME,
+      role: 'admin',
+    });
   }
+ }
+
 }
