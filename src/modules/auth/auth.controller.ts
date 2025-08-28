@@ -9,19 +9,16 @@ import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  // No guard - public endpoint
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
   }
 
-  // No guard - public endpoint
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
   }
 
-  // Guard applied only to this endpoint
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   getProfile(@Request() req) {
