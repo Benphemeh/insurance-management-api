@@ -5,13 +5,14 @@ import { SequelizeModule } from '@nestjs/sequelize';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
-import { LocalStrategy } from 'src/auth/strategies/local.strategy';
-import { JwtStrategy } from 'src/auth/strategies/jwt.strategy';
+
 import { User } from 'src/core';
+import { LocalStrategy } from './auth/strategies/local.strategy';
+import { JwtStrategy } from './auth/strategies/jwt.strategy';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }), // 👈 makes .env variables available everywhere
+    ConfigModule.forRoot({ isGlobal: true }),
     SequelizeModule.forFeature([User]),
     PassportModule,
     JwtModule.registerAsync({
