@@ -2,7 +2,6 @@
 export * from './database/models';
 // export * from './database/config';
 
-// Common
 export * from './constants';
 // export * from './decorators';
 // export * from './enums';
