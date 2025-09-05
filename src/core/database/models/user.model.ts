@@ -3,14 +3,14 @@ import {
   Column,
   Model,
   PrimaryKey,
-  AutoIncrement,
   HasMany,
   BeforeCreate,
   BeforeUpdate,
+  DataType,
 } from 'sequelize-typescript';
 import * as bcrypt from 'bcryptjs';
+import { v4 as uuidv4 } from 'uuid';
 import { Customer } from './customer.model';
-
 
 @Table({
   tableName: 'users',
@@ -18,9 +18,11 @@ import { Customer } from './customer.model';
 })
 export class User extends Model {
   @PrimaryKey
-  @AutoIncrement
-  @Column
-  id: number;
+  @Column({
+    type: DataType.UUID,
+    defaultValue: DataType.UUIDV4,
+  })
+  id: string;
 
   @Column({ allowNull: false, unique: true })
   username: string;
@@ -48,6 +50,13 @@ export class User extends Model {
 
   @HasMany(() => Customer, 'createdBy')
   customers: Customer[];
+
+  @BeforeCreate
+  static async setId(instance: User) {
+    if (!instance.id) {
+      instance.id = uuidv4();
+    }
+  }
 
   @BeforeCreate
   @BeforeUpdate

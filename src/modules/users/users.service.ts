@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+import { JwtService } from '@nestjs/jwt';
 import { Op } from 'sequelize';
 import { User } from 'src/core';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -12,7 +13,25 @@ export class UsersService {
   constructor(
     @InjectModel(User)
     private userModel: typeof User,
+    private jwtService: JwtService,
   ) {}
+
+  private generateTokens(user: any) {
+    const payload = {
+      email: user.email,
+      userId: user.id,
+      username: user.username,
+      role: user.role,
+    };
+
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
+    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
 
   async findAll(queryDto: QueryUsersDto) {
     const { page, limit, search, role, status } = queryDto;
@@ -20,7 +39,6 @@ export class UsersService {
 
     const whereClause: any = {};
 
-    // Search by username, email, firstName, or lastName
     if (search) {
       whereClause[Op.or] = [
         { username: { [Op.iLike]: `%${search}%` } },
@@ -47,17 +65,22 @@ export class UsersService {
     });
 
     return {
-      users: rows,
-      pagination: {
-        total: count,
-        page,
-        limit,
-        totalPages: Math.ceil(count / limit),
+      status: 200,
+      success: true,
+      message: 'Users retrieved successfully',
+      data: {
+        users: rows,
+        pagination: {
+          total: count,
+          page,
+          limit,
+          totalPages: Math.ceil(count / limit),
+        },
       },
     };
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const user = await this.userModel.findByPk(id, {
       attributes: { exclude: ['password'] },
       include: [
@@ -73,11 +96,15 @@ export class UsersService {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
-    return user;
+    return {
+      status: 200,
+      success: true,
+      message: 'User retrieved successfully',
+      data: user,
+    };
   }
 
   async create(createUserDto: CreateUserDto) {
-    // Check if username or email already exists
     const existingUser = await this.userModel.findOne({
       where: {
         [Op.or]: [
@@ -97,17 +124,27 @@ export class UsersService {
       status: createUserDto.status || 'active',
     });
 
-    return user.toJSON();
+    const userJson = user.toJSON();
+    const tokens = this.generateTokens(userJson);
+
+    return {
+      status: 200,
+      success: true,
+      message: 'User created successfully',
+      data: {
+        user: userJson,
+        tokens,
+      },
+    };
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto) {
+  async update(id: string, updateUserDto: UpdateUserDto) {
     const user = await this.userModel.findByPk(id);
 
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
-    // Check if username or email is being changed and already exists
     if (updateUserDto.username || updateUserDto.email) {
       const whereClause: any = {
         id: { [Op.ne]: id },
@@ -130,40 +167,50 @@ export class UsersService {
     }
 
     await user.update(updateUserDto);
-    return user.toJSON();
+    return {
+      status: 200,
+      success: true,
+      message: 'User updated successfully',
+      data: user.toJSON(),
+    };
   }
 
-  async remove(id: number) {
+  async remove(id: string) {
     const user = await this.userModel.findByPk(id);
 
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
-    // Instead of hard delete, set status to inactive
     await user.update({ status: 'inactive' });
-    return { message: 'User deactivated successfully' };
+    return {
+      status: 200,
+      success: true,
+      message: 'User deactivated successfully',
+    };
   }
 
-  async changePassword(id: number, changePasswordDto: ChangePasswordDto) {
+  async changePassword(id: string, changePasswordDto: ChangePasswordDto) {
     const user = await this.userModel.findByPk(id);
 
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
-    // Verify current password
     const isCurrentPasswordValid = await user.comparePassword(changePasswordDto.currentPassword);
     if (!isCurrentPasswordValid) {
       throw new BadRequestException('Current password is incorrect');
     }
 
-    // Update password (will be hashed by beforeUpdate hook)
     await user.update({ password: changePasswordDto.newPassword });
-    return { message: 'Password changed successfully' };
+    return {
+      status: 200,
+      success: true,
+      message: 'Password changed successfully',
+    };
   }
 
-  async updateRole(id: number, role: string) {
+  async updateRole(id: string, role: string) {
     const user = await this.userModel.findByPk(id);
 
     if (!user) {
@@ -171,10 +218,15 @@ export class UsersService {
     }
 
     await user.update({ role });
-    return user.toJSON();
+    return {
+      status: 200,
+      success: true,
+      message: 'User role updated successfully',
+      data: user.toJSON(),
+    };
   }
 
-  async updateStatus(id: number, status: string) {
+  async updateStatus(id: string, status: string) {
     const user = await this.userModel.findByPk(id);
 
     if (!user) {
@@ -182,7 +234,12 @@ export class UsersService {
     }
 
     await user.update({ status });
-    return user.toJSON();
+    return {
+      status: 200,
+      success: true,
+      message: 'User status updated successfully',
+      data: user.toJSON(),
+    };
   }
 
   async getUserStats() {
@@ -201,11 +258,16 @@ export class UsersService {
     });
 
     return {
-      totalUsers,
-      activeUsers,
-      adminUsers,
-      brokerUsers,
-      roleDistribution,
+      status: 200,
+      success: true,
+      message: 'User statistics retrieved successfully',
+      data: {
+        totalUsers,
+        activeUsers,
+        adminUsers,
+        brokerUsers,
+        roleDistribution,
+      },
     };
   }
 }

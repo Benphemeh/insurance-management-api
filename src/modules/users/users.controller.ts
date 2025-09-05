@@ -9,7 +9,6 @@ import {
   Query,
   UseGuards,
   Request,
-  ParseIntPipe,
   BadRequestException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -36,11 +35,11 @@ export class UsersController {
 
   @Get('me')
   getCurrentUser(@Request() req) {
-    return this.usersService.findOne(req.user.sub);
+    return this.usersService.findOne(req.user.userId);
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
   }
 
@@ -51,7 +50,7 @@ export class UsersController {
 
   @Patch(':id')
   update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
   ) {
     return this.usersService.update(id, updateUserDto);
@@ -59,12 +58,11 @@ export class UsersController {
 
   @Patch(':id/change-password')
   changePassword(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() changePasswordDto: ChangePasswordDto,
     @Request() req,
   ) {
-    // Users can only change their own password unless they're admin
-    if (req.user.sub !== id && req.user.role !== 'admin') {
+    if (req.user.userId !== id && req.user.role !== 'admin') {
       throw new BadRequestException('You can only change your own password');
     }
     return this.usersService.changePassword(id, changePasswordDto);
@@ -72,7 +70,7 @@ export class UsersController {
 
   @Patch(':id/role')
   updateRole(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body('role') role: string,
   ) {
     const validRoles = ['admin', 'manager', 'broker', 'underwriter', 'accountant', 'claims_officer', 'user'];
@@ -84,7 +82,7 @@ export class UsersController {
 
   @Patch(':id/status')
   updateStatus(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body('status') status: string,
   ) {
     const validStatuses = ['active', 'inactive', 'suspended'];
@@ -95,7 +93,7 @@ export class UsersController {
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
+  remove(@Param('id') id: string) {
     return this.usersService.remove(id);
   }
 }
