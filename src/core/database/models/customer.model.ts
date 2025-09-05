@@ -3,13 +3,12 @@ import {
   Column,
   Model,
   PrimaryKey,
-  AutoIncrement,
   DataType,
   ForeignKey,
   BelongsTo,
 } from 'sequelize-typescript';
+import { v4 as uuidv4 } from 'uuid';
 import { User } from './user.model';
-
 
 @Table({
   tableName: 'customers',
@@ -17,9 +16,11 @@ import { User } from './user.model';
 })
 export class Customer extends Model {
   @PrimaryKey
-  @AutoIncrement
-  @Column
-  id: number;
+  @Column({
+    type: DataType.UUID,
+    defaultValue: DataType.UUIDV4,
+  })
+  id: string;
 
   @Column({ allowNull: false })
   firstName: string;
@@ -46,8 +47,8 @@ export class Customer extends Model {
   status: string;
 
   @ForeignKey(() => User)
-  @Column
-  createdBy: number;
+  @Column(DataType.UUID)
+  createdBy: string;
 
   @BelongsTo(() => User, 'createdBy')
   creator: User;
